@@ -324,28 +324,43 @@ def _get_visualization_options(edge_smooth=False):
 
 def _save_and_modify_html(net, output_file, community_count, all_nodes, triples):
     """Save the network as HTML and modify with custom template."""
-    # Save the network as HTML
-    net.save_graph(output_file)
+    # Create a temporary file for PyVis to write to
+    # This works around encoding issues on Windows
+    import tempfile
+    import os
     
-    # Read the generated HTML
-    with open(output_file, 'r', encoding='utf-8') as f:
-        html = f.read()
+    temp_fd, temp_path = tempfile.mkstemp(suffix='.html')
+    os.close(temp_fd)  # Close the file descriptor immediately
     
-    # Add our custom controls by replacing the div with our template
-    html = html.replace('<div id="mynetwork" class="card-body"></div>', _load_html_template())
-    
-    # Fix the duplicate title issue
-    # Remove the default PyVis header
-    html = re.sub(r'<center>\s*<h1>.*?</h1>\s*</center>', '', html)
-    
-    # Replace the other h1 with our enhanced title
-    html = html.replace('<h1></h1>', f'<h1>Knowledge Graph - {len(all_nodes)} Nodes, {len(triples)} Relationships, {community_count} Communities</h1>')
-    
-    # Write back the modified HTML
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(html)
-    
-    print(f"Knowledge graph visualization saved to {output_file}")
+    try:
+        # Save the network to the temporary file
+        net.save_graph(temp_path)
+        
+        # Read the generated HTML with explicit UTF-8 encoding
+        with open(temp_path, 'r', encoding='utf-8') as f:
+            html = f.read()
+        
+        # Add our custom controls by replacing the div with our template
+        html = html.replace('<div id="mynetwork" class="card-body"></div>', _load_html_template())
+        
+        # Fix the duplicate title issue
+        # Remove the default PyVis header
+        html = re.sub(r'<center>\s*<h1>.*?</h1>\s*</center>', '', html)
+        
+        # Replace the other h1 with our enhanced title
+        html = html.replace('<h1></h1>', f'<h1>Knowledge Graph - {len(all_nodes)} Nodes, {len(triples)} Relationships, {community_count} Communities</h1>')
+        
+        # Write the modified HTML to the final output file with explicit UTF-8 encoding
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(html)
+        
+        print(f"Knowledge graph visualization saved to {output_file}")
+    finally:
+        # Clean up the temporary file
+        try:
+            os.unlink(temp_path)
+        except:
+            pass  # Ignore errors in cleanup
 
 def sample_data_visualization(output_file="sample_knowledge_graph.html", edge_smooth=None, config=None):
     """
