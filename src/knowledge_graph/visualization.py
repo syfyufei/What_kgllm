@@ -324,12 +324,15 @@ def _get_visualization_options(edge_smooth=False):
 
 def _save_and_modify_html(net, output_file, community_count, all_nodes, triples):
     """Save the network as HTML and modify with custom template."""
-    # Save the network as HTML
-    net.save_graph(output_file)
+    # Instead of letting PyVis write to a file, we'll access its HTML directly
+    # and write it ourselves with explicit UTF-8 encoding
     
-    # Read the generated HTML
-    with open(output_file, 'r', encoding='utf-8') as f:
-        html = f.read()
+    # Generate the HTML content
+    # This happens internally in PyVis without writing to a file
+    net.generate_html()
+    
+    # Get the HTML from PyVis's internal html attribute
+    html = net.html
     
     # Add our custom controls by replacing the div with our template
     html = html.replace('<div id="mynetwork" class="card-body"></div>', _load_html_template())
@@ -341,7 +344,7 @@ def _save_and_modify_html(net, output_file, community_count, all_nodes, triples)
     # Replace the other h1 with our enhanced title
     html = html.replace('<h1></h1>', f'<h1>Knowledge Graph - {len(all_nodes)} Nodes, {len(triples)} Relationships, {community_count} Communities</h1>')
     
-    # Write back the modified HTML
+    # Write the HTML directly to the output file with explicit UTF-8 encoding
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(html)
     
