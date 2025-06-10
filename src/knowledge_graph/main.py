@@ -18,73 +18,82 @@ from src.knowledge_graph.prompts import MAIN_SYSTEM_PROMPT, MAIN_USER_PROMPT
 
 def process_with_llm(config, input_text, debug=False):
     """
-    Process input text with LLM to extract triples.
+    处理输入文本，使用LLM提取三元组。
     
     Args:
-        config: Configuration dictionary
-        input_text: Text to analyze
-        debug: If True, print detailed debug information
+        config: 配置字典
+        input_text: 要分析的文本
+        debug: 如果为True，打印详细调试信息
         
     Returns:
-        List of extracted triples or None if processing failed
+        提取的三元组列表，如果处理失败则返回None
     """
-    # Use prompts from the prompts module
-    system_prompt = MAIN_SYSTEM_PROMPT
-    user_prompt = MAIN_USER_PROMPT
-    user_prompt += f"```\n{input_text}```\n" 
+    try:
+        # 使用专门的知识图谱提取提示
+        system_prompt = "你是一个专业的知识图谱构建助手。请从文本中提取实体和关系，并以JSON格式返回。"
 
-    # LLM configuration
-    model = config["llm"]["model"]
-    api_key = config["llm"]["api_key"]
-    max_tokens = config["llm"]["max_tokens"]
-    temperature = config["llm"]["temperature"]
-    base_url = config["llm"]["base_url"]
-    
-    # Process with LLM
-    metadata = {}
-    response = call_llm(model, user_prompt, api_key, system_prompt, max_tokens, temperature, base_url)
-    
-    # Print raw response only if debug mode is on
-    if debug:
-        print("Raw LLM response:")
-        print(response)
-        print("\n---\n")
-    
-    # Extract JSON from the response
-    result = extract_json_from_text(response)
-    
-    if result:
-        # Validate and filter triples to ensure they have all required fields
-        valid_triples = []
-        invalid_count = 0
+        user_prompt = f"""
+        请从以下文本中提取实体和关系，并以JSON格式返回：
+
+        文本：{input_text}
+
+        请返回JSON数组格式，每个元素包含subject（主体）、predicate（关系）、object（客体）：
+        [
+            {{"subject": "实体1", "predicate": "关系", "object": "实体2"}},
+            {{"subject": "实体3", "predicate": "关系", "object": "实体4"}}
+        ]
+
+        要求：
+        1. 关系词（predicate）最多3个字
+        2. 只返回JSON数组，不要其他内容
+        3. 确保JSON格式正确
+    """
+
+        # LLM配置
+        model = config["llm"]["model"]
+        api_key = config["llm"]["api_key"]
+        max_tokens = config["llm"]["max_tokens"]
+        temperature = config["llm"]["temperature"]
+        base_url = config["llm"]["base_url"]
         
-        for item in result:
-            if isinstance(item, dict) and "subject" in item and "predicate" in item and "object" in item:
-                # Add metadata to valid items
-                valid_triples.append(dict(item, **metadata))
-            else:
-                invalid_count += 1
+        if debug:
+            print(f"发送给LLM的提示:\n{user_prompt[:200]}...")
+
+        # 处理文本
+        response = call_llm(model, user_prompt, api_key, system_prompt, max_tokens, temperature, base_url)
         
-        if invalid_count > 0:
-            print(f"Warning: Filtered out {invalid_count} invalid triples missing required fields")
-        
-        if not valid_triples:
-            print("Error: No valid triples found in LLM response")
+        if response is None:
+            print("LLM API调用失败")
             return None
         
-        # Apply predicate length limit to all valid triples
-        for triple in valid_triples:
-            triple["predicate"] = limit_predicate_length(triple["predicate"])
-        
-        # Print extracted JSON only if debug mode is on
         if debug:
-            print("Extracted JSON:")
-            print(json.dumps(valid_triples, indent=2))  # Pretty print the JSON
-        
+            print(f"LLM原始响应:\n{response}")
+            
+        # 从响应中提取JSON
+        triples = extract_json_from_text(response)
+            
+        if triples is None:
+            print("无法从LLM响应中提取JSON")
+            return None
+            
+        # 验证提取的三元组格式
+        valid_triples = []
+        for triple in triples:
+            if isinstance(triple, dict) and 'subject' in triple and 'predicate' in triple and 'object' in triple:
+                valid_triples.append({
+                    'subject': str(triple['subject']).strip(),
+                    'predicate': str(triple['predicate']).strip(),
+                    'object': str(triple['object']).strip()
+                })
+
+        if debug:
+            print(f"提取的有效三元组数量: {len(valid_triples)}")
+            for i, triple in enumerate(valid_triples[:5]):  # 只显示前5个
+                print(f"  {i+1}. {triple}")
+
         return valid_triples
-    else:
-        # Always print error messages even if debug is off
-        print("\n\nERROR ### Could not extract valid JSON from response: ", response, "\n\n")
+    except Exception as e:
+        print(f"处理文本时出错: {str(e)}")
         return None
 
 def process_text_in_chunks(config, full_text, debug=False):
@@ -119,7 +128,6 @@ def process_text_in_chunks(config, full_text, debug=False):
         
         # Process the chunk with LLM
         chunk_results = process_with_llm(config, chunk, debug)
-        
         if chunk_results:
             # Add chunk information to each triple
             for item in chunk_results:
@@ -196,6 +204,45 @@ def get_unique_entities(triples):
         if "object" in triple:
             entities.add(triple["object"])
     return entities
+
+def create_knowledge_graph(text, title="Knowledge Graph", debug=False):
+    """
+    Create a knowledge graph from input text.
+    
+    Args:
+        text: Input text to analyze
+        title: Title for the visualization
+        debug: If True, print debug information
+        
+    Returns:
+        Path to the generated HTML file
+    """
+    # Load configuration
+    config = load_config()
+    
+    # Process text chunks
+    chunks = chunk_text(text, max_length=2000)
+    all_triples = []
+    
+    for chunk in chunks:
+        # Process each chunk with LLM
+        chunk_triples = process_with_llm(config, chunk, debug=debug)
+        if chunk_triples:
+            all_triples.extend(chunk_triples)
+    
+    if not all_triples:
+        print("No triples extracted from text")
+        return None
+    
+    # Standardize and process triples
+    standardized_triples = standardize_entities(all_triples)
+    enhanced_triples = infer_relationships(standardized_triples)
+    final_triples = limit_predicate_length(enhanced_triples)
+    
+    # Generate visualization
+    output_path = visualize_knowledge_graph(final_triples, title=title)
+    
+    return output_path
 
 def main():
     """Main entry point for the knowledge graph generator."""
@@ -274,4 +321,4 @@ def main():
         print("Knowledge graph generation failed due to errors in LLM processing.")
 
 if __name__ == "__main__":
-    main() 
+    main()

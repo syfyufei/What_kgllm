@@ -18,18 +18,18 @@ def _load_html_template():
 
 def visualize_knowledge_graph(triples, output_file="knowledge_graph.html", edge_smooth=None, config=None):
     """
-    Create and visualize a knowledge graph from subject-predicate-object triples.
+    从主谓宾三元组创建并可视化知识图谱。
     
     Args:
-        triples: List of dictionaries with 'subject', 'predicate', and 'object' keys
-        output_file: HTML file to save the visualization
-        edge_smooth: Edge smoothing setting (overrides config): 
+        triples: 包含'subject'、'predicate'和'object'键的字典列表
+        output_file: 保存可视化结果的HTML文件
+        edge_smooth: 边平滑设置（覆盖配置）：
                     false, "dynamic", "continuous", "discrete", "diagonalCross", 
                     "straightCross", "horizontal", "vertical", "curvedCW", "curvedCCW", "cubicBezier"
-        config: Configuration dictionary (optional)
+        config: 配置字典（可选）
         
     Returns:
-        Dictionary with graph statistics
+        包含图谱统计信息的字典
     """
     # Determine edge smoothing from config if not explicitly provided
     if edge_smooth is None and config is not None:
@@ -141,7 +141,7 @@ def visualize_knowledge_graph(triples, output_file="knowledge_graph.html", edge_
     _add_nodes_and_edges_to_network(net, G)
     
     # Set visualization options
-    options = _get_visualization_options(edge_smooth)
+    options = _get_visualization_options(len(all_nodes), len(triples))
     
     # Set all options in one go with proper JSON
     net.set_options(json.dumps(options))
@@ -262,63 +262,58 @@ def _add_nodes_and_edges_to_network(net, G):
         
         net.add_edge(source, target, **edge_options)
 
-def _get_visualization_options(edge_smooth=False):
+def _get_visualization_options(nodes_count, edges_count):
     """
-    Get options for PyVis visualization.
+    Get visualization options for the network graph.
     
     Args:
-        edge_smooth: Edge smoothing setting: 
-                    false, "dynamic", "continuous", "discrete", "diagonalCross", 
-                    "straightCross", "horizontal", "vertical", "curvedCW", "curvedCCW", "cubicBezier"
+        nodes_count (int): Number of nodes in the network
+        edges_count (int): Number of edges in the network
+        
+    Returns:
+        dict: Network visualization options
     """
-    # Configure physics for better visualization
-    physics_options = {
-        "enabled": True,  # Physics on by default
-        "solver": "forceAtlas2Based",
-        "forceAtlas2Based": {
-            "gravitationalConstant": -50,
-            "centralGravity": 0.01,
-            "springLength": 100,
-            "springConstant": 0.08
-        },
-        "stabilization": {
-            "iterations": 200,  # Increased for better layout
-            "enabled": True
-        }
-    }
+    # Get adaptive physics settings based on network size
+    physics_settings = _get_adaptive_physics_settings(nodes_count, edges_count)
     
-    # Determine edge smoothing based on parameter
-    if isinstance(edge_smooth, str):
-        if edge_smooth.lower() == "false":
-            edge_smoothing = False
-        else:
-            edge_smoothing = {'type': edge_smooth}
-    elif edge_smooth:
-        edge_smoothing = {'type': 'continuous'}  # Default curved type
-    else:
-        edge_smoothing = False
-    
-    # Full options for visualization
     return {
-        "physics": physics_options,
+        "physics": physics_settings,
         "edges": {
             "color": {"inherit": True},
             "font": {"size": 11},
-            "smooth": edge_smoothing  # Apply edge smoothing setting
+            "smooth": False,  # Straight lines for better performance
+            "width": 1.5,  # Slightly thicker default edges
+            "selectionWidth": 2  # Width when selected
         },
         "nodes": {
-            "font": {"size": 14, "face": "Tahoma"},
-            "scaling": {"min": 10, "max": 50},  # Ensure nodes are visible
-            "tooltipDelay": 200
+            "font": {
+                "size": 14,
+                "face": "Tahoma"
+            },
+            "scaling": {
+                "min": 10,
+                "max": 50
+            },
+            "shape": "dot",  # Consistent shape
+            "margin": 10,  # Add some margin around node labels
+            "tooltipDelay": 200,
+            "borderWidth": 2,
+            "borderWidthSelected": 3
         },
         "interaction": {
             "hover": True,
             "navigationButtons": True,
             "keyboard": True,
-            "tooltipDelay": 200
+            "tooltipDelay": 200,
+            "zoomView": True,
+            "dragView": True
         },
         "layout": {
-            "improvedLayout": True
+            "improvedLayout": True,
+            "hierarchical": {
+                "enabled": False,  # We'll use force-directed by default
+                "sortMethod": "directed"  # But keep this ready for hierarchical option
+            }
         }
     }
 
@@ -454,4 +449,112 @@ if __name__ == "__main__":
     for filename, _, description in examples:
         print(f"- {filename}: {description}")
     print(f"- sample_knowledge_graph_config.html: Using {config_description} from config.toml")
-    print("\nTo view these visualizations, open the HTML files in your browser.") 
+    print("\nTo view these visualizations, open the HTML files in your browser.")
+
+def _process_triples(triples, G):
+    """处理三元组并添加到图中"""
+    # 用于存储节点颜色的字典
+    node_colors = {}
+    edge_colors = {}
+    
+    for triple in triples:
+        subj = triple['subject']
+        pred = triple['predicate']
+        obj = triple['object']
+        
+        # 如果是新节点，随机分配颜色
+        for node in [subj, obj]:
+            if node not in node_colors:
+                # 使用预定义的柔和色彩
+                colors = ['#7FDBFF', '#B10DC9', '#39CCCC', '#01FF70', '#FF4136', '#F012BE', 
+                         '#3D9970', '#AAAAAA', '#FFB6C1', '#20B2AA']
+                node_colors[node] = colors[len(node_colors) % len(colors)]
+        
+        # 添加节点和边
+        G.add_node(subj, color=node_colors[subj], title=f"实体: {subj}")
+        G.add_node(obj, color=node_colors[obj], title=f"实体: {obj}")
+        
+        # 确定边的样式
+        edge_style = 'solid'  # 默认样式
+        if 'inferred' in triple and triple['inferred']:
+            edge_style = 'dashed'
+        
+        # 添加边，使用谓词作为标签
+        G.add_edge(subj, obj, title=pred, label=pred, style=edge_style)
+
+def _apply_community_colors(G):
+    """应用社区检测和颜色"""
+    try:
+        import community
+        
+        # 使用 Louvain 方法进行社区检测
+        communities = community.best_partition(G.to_undirected())
+        
+        # 为每个社区分配不同的颜色
+        community_colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD',
+                          '#D4A5A5', '#9B59B6', '#3498DB', '#E67E22', '#2ECC71']
+        
+        # 更新节点颜色
+        for node in G.nodes():
+            community_id = communities[node]
+            color = community_colors[community_id % len(community_colors)]
+            G.nodes[node]['color'] = color
+            
+    except ImportError:
+        print("Note: community detection package not found. Using default colors.")
+
+def _get_adaptive_physics_settings(nodes_count, edges_count):
+    """
+    Returns optimized physics settings based on network size.
+    
+    Args:
+        nodes_count (int): Number of nodes in the network
+        edges_count (int): Number of edges in the network
+        
+    Returns:
+        dict: Physics configuration options
+    """
+    # Base settings for small networks
+    settings = {
+        "enabled": True,
+        "solver": "forceAtlas2Based",
+        "forceAtlas2Based": {
+            "gravitationalConstant": -50,
+            "centralGravity": 0.01,
+            "springLength": 100,
+            "springConstant": 0.08,
+        },
+        "stabilization": {
+            "enabled": True,
+            "iterations": 200
+        }
+    }
+    
+    # Adjust settings for larger networks
+    if nodes_count > 100:
+        settings["forceAtlas2Based"].update({
+            "gravitationalConstant": -80,
+            "centralGravity": 0.02,
+            "springLength": 150,
+            "springConstant": 0.05
+        })
+        settings["stabilization"]["iterations"] = 300
+        
+    if nodes_count > 200:
+        settings["solver"] = "barnesHut"
+        settings["barnesHut"] = {
+            "gravitationalConstant": -8000,
+            "centralGravity": 0.3,
+            "springLength": 250,
+            "springConstant": 0.04,
+            "damping": 0.09
+        }
+        settings["stabilization"]["iterations"] = 500
+    
+    if edges_count / max(nodes_count, 1) > 5:  # Dense networks
+        if settings["solver"] == "forceAtlas2Based":
+            settings["forceAtlas2Based"]["springLength"] *= 1.5
+        else:
+            settings["barnesHut"]["springLength"] *= 1.5
+    
+    return settings

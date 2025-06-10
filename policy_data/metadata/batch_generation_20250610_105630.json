@@ -1,0 +1,26 @@
+{
+  "generated_at": "2025-06-10T10:56:30.274968",
+  "batch_size": 1,
+  "years_processed": [
+    2024
+  ],
+  "summary_stats": {
+    "total_triples": 18591,
+    "avg_triples_per_year": 18591.0,
+    "total_entities": 2705,
+    "avg_entities_per_year": 2705.0,
+    "total_processing_time": 1811.43
+  },
+  "yearly_details": {
+    "2024": {
+      "year": 2024,
+      "generated_at": "2025-06-10T10:56:30.221722",
+      "processing_time_seconds": 1811.43,
+      "total_triples": 18591,
+      "unique_entities": 2705,
+      "unique_relations": 1453,
+      "text_length": 33914,
+      "chunks_processed": 397
+    }
+  }
+}

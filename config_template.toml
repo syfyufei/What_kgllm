@@ -1,8 +1,10 @@
+# 测试配置文件 - 请根据你的实际情况修改
+
 [llm]
-# 美团内部LLM API配置 - GPT-4版本
-model = "gpt-4-0613"
-api_key = "1871093020435750927"
-base_url = "https://aigc.sankuai.com/v1/openai/native/chat/completions"
+# 选择你要使用的模型和API
+model = "gpt-3.5-turbo"  # 或者 "qwen2:7b", "glm-4" 等
+api_key = "your-api-key-here"  # 替换为你的真实API密钥
+base_url = "https://api.openai.com/v1/chat/completions"  # 对应的API端点
 max_tokens = 4096
 temperature = 0.2
 

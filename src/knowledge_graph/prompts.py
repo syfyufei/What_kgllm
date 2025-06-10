@@ -2,23 +2,41 @@
 
 # Phase 1: Main extraction prompts
 MAIN_SYSTEM_PROMPT = """
-You are an advanced AI system specialized in knowledge extraction and knowledge graph generation.
-Your expertise includes identifying consistent entity references and meaningful relationships in text.
-CRITICAL INSTRUCTION: All relationships (predicates) MUST be no more than 3 words maximum. Ideally 1-2 words. This is a hard limit.
+你是一个技术文档分析助手。请帮忙从文本中识别关键的技术概念和它们之间的关系。
+主要关注：
+1. 技术术语和概念
+2. 方法和流程
+3. 工具和技术之间的关系
+请用简单、客观的方式描述概念之间的联系，每个关系用1-2个动词表示。
 """
 
 MAIN_USER_PROMPT = """
-Your task: Read the text below (delimited by triple backticks) and identify all Subject-Predicate-Object (S-P-O) relationships in each sentence. Then produce a single JSON array of objects, each representing one triple.
+请分析下面的技术文档，找出其中的主要技术概念和它们之间的关系：
 
-Follow these rules carefully:
+1. 识别关键技术概念和术语
+2. 分析这些概念之间的联系
+3. 用简单的动词描述它们的关系
 
-- Entity Consistency: Use consistent names for entities throughout the document. For example, if "John Smith" is mentioned as "John", "Mr. Smith", and "John Smith" in different places, use a single consistent form (preferably the most complete one) in all triples.
-- Atomic Terms: Identify distinct key terms (e.g., objects, locations, organizations, acronyms, people, conditions, concepts, feelings). Avoid merging multiple ideas into one term (they should be as "atomistic" as possible).
-- Unified References: Replace any pronouns (e.g., "he," "she," "it," "they," etc.) with the actual referenced entity, if identifiable.
-- Pairwise Relationships: If multiple terms co-occur in the same sentence (or a short paragraph that makes them contextually related), create one triple for each pair that has a meaningful relationship.
-- CRITICAL INSTRUCTION: Predicates MUST be 1-3 words maximum. Never more than 3 words. Keep them extremely concise.
-- Ensure that all possible relationships are identified in the text and are captured in an S-P-O relation.
-- Standardize terminology: If the same concept appears with slight variations (e.g., "artificial intelligence" and "AI"), use the most common or canonical form consistently.
+输出格式示例：
+LLM - 处理 - 文本
+数据库 - 存储 - 数据
+
+要求：
+1. 每个关系用1-2个动词表示
+2. 保持客观准确
+3. 突出技术概念之间的关系
+
+以下是文字：
+
+请严格遵循以下规则：
+
+- 实体一致性：在整个文档中使用一致的实体名称。例如，如果"习近平"在不同地方被提到为"习主席"、"习总书记"和"习近平"，在所有三元组中使用单一的一致形式（优选最完整的形式）。
+- 原子性术语：识别独特的关键术语（如：物体、地点、组织、缩写、人物、状态、概念、情感）。避免将多个概念合并为一个术语（应该尽可能"原子化"）。
+- 统一引用：将任何代词（如："他"、"她"、"它"、"他们"等）替换为实际引用的实体（如果可以识别）。
+- 成对关系：如果多个术语在同一句子中出现（或在使它们在上下文中相关的短段落中），为每对具有有意义关系的术语创建一个三元组。
+- 核心指令：谓词必须最多3个汉字。绝不超过3个字。保持极其简洁。
+- 确保识别文本中所有可能的关系，并以S-P-O关系捕获。
+- 标准化术语：如果同一概念以略微不同的形式出现（如："人工智能"和"AI"），一致地使用最常见或规范的形式。
 - Make all the text of S-P-O text lower-case, even Names of people and places.
 - If a person is mentioned by name, create a relation to their location, profession and what they are known for (invented, wrote, started, title, etc.) if known and if it fits the context of the informaiton. 
 

@@ -1,0 +1,191 @@
+[
+  {
+    "year": 2013,
+    "source_file": "data/pa/PA2013.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2013.txt",
+    "text_length": 31237,
+    "status": "success"
+  },
+  {
+    "year": 2014,
+    "source_file": "data/pa/PA2014.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2014.txt",
+    "text_length": 28008,
+    "status": "success"
+  },
+  {
+    "year": 2015,
+    "source_file": "data/pa/PA2015.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2015.txt",
+    "text_length": 28381,
+    "status": "success"
+  },
+  {
+    "year": 2016,
+    "source_file": "data/pa/PA2016.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2016.txt",
+    "text_length": 31319,
+    "status": "success"
+  },
+  {
+    "year": 1997,
+    "source_file": "data/pa/pa1997.xml",
+    "output_file": "policy_data/raw_texts/policy_address_1997.txt",
+    "text_length": 27212,
+    "status": "success"
+  },
+  {
+    "year": 1998,
+    "source_file": "data/pa/pa1998.xml",
+    "output_file": "policy_data/raw_texts/policy_address_1998.txt",
+    "text_length": 34072,
+    "status": "success"
+  },
+  {
+    "year": 1999,
+    "source_file": "data/pa/pa1999.xml",
+    "output_file": "policy_data/raw_texts/policy_address_1999.txt",
+    "text_length": 28970,
+    "status": "success"
+  },
+  {
+    "year": 2000,
+    "source_file": "data/pa/pa2000.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2000.txt",
+    "text_length": 21793,
+    "status": "success"
+  },
+  {
+    "year": 2001,
+    "source_file": "data/pa/pa2001.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2001.txt",
+    "text_length": 21231,
+    "status": "success"
+  },
+  {
+    "year": 2003,
+    "source_file": "data/pa/pa2003.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2003.txt",
+    "text_length": 13143,
+    "status": "success"
+  },
+  {
+    "year": 2004,
+    "source_file": "data/pa/pa2004.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2004.txt",
+    "text_length": 8279,
+    "status": "success"
+  },
+  {
+    "year": 2005,
+    "source_file": "data/pa/pa2005.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2005.txt",
+    "text_length": 19877,
+    "status": "success"
+  },
+  {
+    "year": 2005,
+    "source_file": "data/pa/pa200502.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2005.txt",
+    "text_length": 21500,
+    "status": "success"
+  },
+  {
+    "year": 2006,
+    "source_file": "data/pa/pa2006.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2006.txt",
+    "text_length": 15310,
+    "status": "success"
+  },
+  {
+    "year": 2007,
+    "source_file": "data/pa/pa2007.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2007.txt",
+    "text_length": 25883,
+    "status": "success"
+  },
+  {
+    "year": 2008,
+    "source_file": "data/pa/pa2008.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2008.txt",
+    "text_length": 21479,
+    "status": "success"
+  },
+  {
+    "year": 2009,
+    "source_file": "data/pa/pa2009.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2009.txt",
+    "text_length": 20869,
+    "status": "success"
+  },
+  {
+    "year": 2010,
+    "source_file": "data/pa/pa2010.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2010.txt",
+    "text_length": 24444,
+    "status": "success"
+  },
+  {
+    "year": 2011,
+    "source_file": "data/pa/pa2011.pdf",
+    "output_file": "policy_data/raw_texts/policy_address_2011.txt",
+    "text_length": 29858,
+    "status": "success"
+  },
+  {
+    "year": 2017,
+    "source_file": "data/pa/pa2017.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2017.txt",
+    "text_length": 9011,
+    "status": "success"
+  },
+  {
+    "year": 2018,
+    "source_file": "data/pa/pa2018.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2018.txt",
+    "text_length": 8300,
+    "status": "success"
+  },
+  {
+    "year": 2019,
+    "source_file": "data/pa/pa2019.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2019.txt",
+    "text_length": 11470,
+    "status": "success"
+  },
+  {
+    "year": 2020,
+    "source_file": "data/pa/pa2020.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2020.txt",
+    "text_length": 35327,
+    "status": "success"
+  },
+  {
+    "year": 2021,
+    "source_file": "data/pa/pa2021.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2021.txt",
+    "text_length": 35009,
+    "status": "success"
+  },
+  {
+    "year": 2022,
+    "source_file": "data/pa/pa2022.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2022.txt",
+    "text_length": 48400,
+    "status": "success"
+  },
+  {
+    "year": 2023,
+    "source_file": "data/pa/pa2023.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2023.txt",
+    "text_length": 38940,
+    "status": "success"
+  },
+  {
+    "year": 2024,
+    "source_file": "data/pa/pa2024.xml",
+    "output_file": "policy_data/raw_texts/policy_address_2024.txt",
+    "text_length": 33914,
+    "status": "success"
+  }
+]

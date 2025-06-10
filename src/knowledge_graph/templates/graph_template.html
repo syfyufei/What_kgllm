@@ -316,6 +316,115 @@
     }
 </style>
 
+<style>
+/* Graph container styles */
+#mynetwork {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    transition: background-color 0.3s ease;
+}
+
+/* Control panel styles */
+.graph-controls {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    z-index: 999;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+}
+
+.dark-mode .graph-controls {
+    background: rgba(40, 40, 40, 0.9);
+}
+
+/* Animation classes */
+.node {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.edge {
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.dark-mode .loading-overlay {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* Tooltip styles */
+.vis-tooltip {
+    position: absolute;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    z-index: 1000;
+    transition: opacity 0.2s ease;
+}
+
+.dark-mode .vis-tooltip {
+    background: rgba(40, 40, 40, 0.95);
+    border-color: #555;
+    color: #fff;
+}
+
+/* Performance mode indicator */
+.performance-mode {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+    pointer-events: none;
+}
+
+.dark-mode .performance-mode {
+    background: rgba(40, 40, 40, 0.9);
+    color: #aaa;
+}
+
+/* Graph navigation buttons */
+.btn-group-vertical > .btn {
+    padding: 6px 10px;
+    margin: 2px 0;
+}
+
+.dark-mode .btn-light {
+    background: #333;
+    border-color: #444;
+    color: #fff;
+}
+
+/* Smooth transitions for dark mode */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+</style>
+
 <script>
 // Helper function to ensure node text colors are correct
 function updateNodeTextColors(color) {
@@ -1138,4 +1247,337 @@ network.once("stabilizationIterationsDone", function() {
     
     console.log("Network stabilization complete");
 });
-</script> 
+
+// Color themes definition
+const COLOR_THEMES = {
+    light: {
+        background: '#ffffff',
+        node: {
+            color: '#000000',
+            borderColor: '#2B7CE9'
+        },
+        edge: {
+            color: '#555555',
+            colorHighlight: '#333333',
+            colorInferred: '#888888'
+        }
+    },
+    dark: {
+        background: '#1e1e1e',
+        node: {
+            color: '#ffffff',
+            borderColor: '#3E8EF7'
+        },
+        edge: {
+            color: '#a0a0a0',
+            colorHighlight: '#ffffff',
+            colorInferred: '#666666'
+        }
+    }
+}
+
+// Apply color theme based on dark mode state
+function applyColorTheme(isDark) {
+    const theme = isDark ? COLOR_THEMES.dark : COLOR_THEMES.light;
+    
+    network.setOptions({
+        nodes: {
+            font: { 
+                color: theme.node.color,
+                size: labelsVisible ? 14 : 0
+            },
+            borderWidth: 2,
+            color: {
+                border: theme.node.borderColor,
+                highlight: {
+                    border: theme.node.borderColor
+                }
+            }
+        },
+        edges: {
+            font: { 
+                color: theme.edge.color,
+                size: labelsVisible ? 12 : 0
+            },
+            color: {
+                color: theme.edge.color,
+                highlight: theme.edge.colorHighlight,
+                inherit: false
+            }
+        }
+    });
+    
+    // Update background color
+    const container = document.getElementById('mynetwork');
+    container.style.backgroundColor = theme.background;
+    
+    // Update edge colors for inferred relationships
+    const edges = network.body.data.edges.get();
+    const updates = edges.map(edge => ({
+        id: edge.id,
+        color: {
+            color: edge.dashes ? theme.edge.colorInferred : theme.edge.color,
+            highlight: theme.edge.colorHighlight,
+            inherit: false
+        }
+    }));
+    
+    network.body.data.edges.update(updates);
+    
+    // Update node text colors
+    updateNodeTextColors(theme.node.color);
+}
+
+// Call applyColorTheme on dark mode toggle
+document.getElementById('theme-toggle').onclick = function() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    applyColorTheme(isDark);
+};
+
+// Initial application of color theme
+applyColorTheme(false);
+
+// Network performance optimization function
+function optimizeNetworkPerformance(level = 'auto') {
+    const nodeCount = network.body.data.nodes.length;
+    let settings = {};
+
+    if (level === 'auto') {
+        // Auto-select optimization level based on network size
+        if (nodeCount > 500) {
+            level = 'high';
+        } else if (nodeCount > 200) {
+            level = 'medium';
+        } else {
+            level = 'low';
+        }
+    }
+
+    switch (level) {
+        case 'high':
+            settings = {
+                improvedLayout: false,
+                smoothCurves: false,
+                hideEdgesOnDrag: true,
+                hideNodesOnDrag: true,
+                physics: {
+                    stabilization: {
+                        iterations: 100
+                    },
+                    barnesHut: {
+                        avoidOverlap: 0.1
+                    }
+                }
+            };
+            break;
+        case 'medium':
+            settings = {
+                improvedLayout: true,
+                smoothCurves: false,
+                hideEdgesOnDrag: true,
+                physics: {
+                    stabilization: {
+                        iterations: 200
+                    },
+                    barnesHut: {
+                        avoidOverlap: 0.3
+                    }
+                }
+            };
+            break;
+        default: // 'low'
+            settings = {
+                improvedLayout: true,
+                smoothCurves: true,
+                hideEdgesOnDrag: false,
+                physics: {
+                    stabilization: {
+                        iterations: 300
+                    },
+                    barnesHut: {
+                        avoidOverlap: 0.5
+                    }
+                }
+            };
+    }
+
+    network.setOptions(settings);
+}
+
+// Optimize network performance on load
+window.addEventListener('load', () => {
+    optimizeNetworkPerformance('auto');
+});
+
+// Enhanced graph navigation controls
+function initializeGraphControls() {
+    // Add double-click handler for node focusing
+    network.on("doubleClick", function(params) {
+        if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            focusOnNode(nodeId, true);
+        }
+    });
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(event) {
+        if (event.ctrlKey || event.metaKey) {
+            switch(event.key) {
+                case '0':
+                    event.preventDefault();
+                    network.fit();
+                    break;
+                case '+':
+                case '=':
+                    event.preventDefault();
+                    network.zoom(1.2);
+                    break;
+                case '-':
+                    event.preventDefault();
+                    network.zoom(0.8);
+                    break;
+                case 'f':
+                    event.preventDefault();
+                    const selected = network.getSelectedNodes();
+                    if (selected.length > 0) {
+                        focusOnNode(selected[0], true);
+                    }
+                    break;
+            }
+        }
+    });
+
+    // Add zoom controls
+    const controls = document.createElement('div');
+    controls.className = 'graph-controls';
+    controls.innerHTML = `
+        <div class="btn-group-vertical" style="position: absolute; bottom: 20px; right: 20px; z-index: 999;">
+            <button class="btn btn-light btn-sm" onclick="network.zoom(1.2)" title="Zoom In">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="btn btn-light btn-sm" onclick="network.fit()" title="Fit Graph">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button class="btn btn-light btn-sm" onclick="network.zoom(0.8)" title="Zoom Out">
+                <i class="fas fa-minus"></i>
+            </button>
+        </div>
+    `;
+    document.getElementById('mynetwork').appendChild(controls);
+}
+
+function focusOnNode(nodeId, withNeighbors = false) {
+    const options = {
+        scale: 1.2,
+        offset: {x: 0, y: 0},
+        animation: {
+            duration: 800,
+            easingFunction: 'easeInOutQuad'
+        }
+    };
+
+    if (withNeighbors) {
+        // Get connected nodes
+        const connectedNodes = network.getConnectedNodes(nodeId);
+        const positions = network.getPositions([nodeId, ...connectedNodes]);
+        
+        // Calculate center of the group
+        let centerX = 0, centerY = 0, count = 0;
+        for (let id in positions) {
+            centerX += positions[id].x;
+            centerY += positions[id].y;
+            count++;
+        }
+        
+        options.position = {
+            x: centerX / count,
+            y: centerY / count
+        };
+    }
+
+    network.focus(nodeId, options);
+    network.selectNodes([nodeId]);
+}
+
+// Initialize graph controls
+initializeGraphControls();
+
+// Network interaction animations
+network.on("selectNode", function(params) {
+    if (params.nodes.length === 1) {
+        const nodeId = params.nodes[0];
+        highlightConnectedNodes(nodeId);
+    }
+});
+
+network.on("deselectNode", function() {
+    resetNodeHighlights();
+});
+
+function highlightConnectedNodes(nodeId) {
+    const connectedNodes = network.getConnectedNodes(nodeId);
+    const connectedEdges = network.getConnectedEdges(nodeId);
+    const updates = [];
+    
+    // Dim all nodes and edges first
+    network.body.data.nodes.forEach((node) => {
+        if (node.id !== nodeId && !connectedNodes.includes(node.id)) {
+            updates.push({
+                id: node.id,
+                opacity: 0.3
+            });
+        }
+    });
+    
+    // Highlight selected node and its connections
+    updates.push({
+        id: nodeId,
+        opacity: 1.0
+    });
+    
+    connectedNodes.forEach((connectedId) => {
+        updates.push({
+            id: connectedId,
+            opacity: 0.8
+        });
+    });
+    
+    // Apply updates with animation
+    network.body.data.nodes.update(updates);
+    
+    // Update edges
+    const edgeUpdates = [];
+    network.body.data.edges.forEach((edge) => {
+        edgeUpdates.push({
+            id: edge.id,
+            opacity: connectedEdges.includes(edge.id) ? 1 : 0.2
+        });
+    });
+    network.body.data.edges.update(edgeUpdates);
+}
+
+function resetNodeHighlights() {
+    const updates = [];
+    
+    // Reset all nodes to full opacity
+    network.body.data.nodes.forEach((node) => {
+        updates.push({
+            id: node.id,
+            opacity: 1.0
+        });
+    });
+    
+    // Apply updates with animation
+    network.body.data.nodes.update(updates);
+    
+    // Reset all edges
+    const edgeUpdates = [];
+    network.body.data.edges.forEach((edge) => {
+        edgeUpdates.push({
+            id: edge.id,
+            opacity: 1.0
+        });
+    });
+    network.body.data.edges.update(edgeUpdates);
+}
+</script>
